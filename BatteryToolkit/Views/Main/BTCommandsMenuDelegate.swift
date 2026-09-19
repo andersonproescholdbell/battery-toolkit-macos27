@@ -111,7 +111,21 @@ internal final class BTCommandsMenuDelegate: NSObject, NSMenuDelegate {
             
             self.infoUnknownStateItem.isHidden = true
             
-            if !powerDisabled {
+            //
+            // macOS 27 removed the SMC adapter keys, so the commands would have
+            // nothing to act on. Show the state, but not the controls.
+            //
+            let powerAdapterSupported =
+            (state[BTStateInfo.Keys.powerAdapterSupported] as? NSNumber)?
+                .boolValue ?? true
+
+            if !powerAdapterSupported {
+                self.infoPowerAdapterDisabledItem.isHidden = true
+                self.infoPowerAdapterEnabledItem.isHidden = false
+
+                self.enablePowerAdapterItem.isHidden = true
+                self.disablePowerAdapterItem.isHidden = true
+            } else if !powerDisabled {
                 self.infoPowerAdapterDisabledItem.isHidden = true
                 self.infoPowerAdapterEnabledItem.isHidden = false
                 

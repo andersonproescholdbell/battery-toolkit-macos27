@@ -24,6 +24,9 @@ internal enum BTPowerEvents {
         }
 
         let supported = SMCComm.Power.supported()
+        if case .mcl = SMCComm.Power.backend {
+            MCLPreflight.logResult(MCLPreflight.run())
+        }
         guard supported else {
             os_log("Machine is unsupported")
             SMCComm.stop()
@@ -271,6 +274,10 @@ internal enum BTPowerEvents {
         //
         return !BTPowerState.isPowerAdapterDisabled() &&
             IOPSPrivate.DrawingUnlimitedPower()
+        //
+        // isPowerAdapterDisabled is always false without adapter keys, so this
+        // collapses to the IOPS check on macOS 27.
+        //
     }
 
     private static func handleLimitedPowerGuarded() {
@@ -315,7 +322,15 @@ internal enum BTPowerEvents {
         //
         #if !DEBUG
             let (percent, _, _) = BTPowerState.getPercentRemaining()
-            _ = BTPowerState.enableCharging(percent: percent)
+            if case .mcl = SMCComm.Power.backend {
+                //
+                // Hand the system limit back as the user had it, rather than
+                // lifting it to 100 and discarding their System Settings value.
+                //
+                SystemChargeLimit.restoreOriginalLimit()
+            } else {
+                _ = BTPowerState.enableCharging(percent: percent)
+            }
             _ = BTPowerState.enablePowerAdapter()
         #endif
         if BTSettings.magSafeSync {

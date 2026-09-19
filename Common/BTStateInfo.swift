@@ -21,6 +21,7 @@ internal enum BTStateInfo {
     enum Keys {
         static let enabled = "Enabled"
         static let powerDisabled = "PowerDisabled"
+        static let powerAdapterSupported = "PowerAdapterSupported"
         static let connected = "Connected"
         static let chargingDisabled = "ChargingDisabled"
         static let progress = "Progress"

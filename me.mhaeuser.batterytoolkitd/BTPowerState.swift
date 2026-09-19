@@ -14,14 +14,16 @@ internal enum BTPowerState {
     static func initState() {
         let chargingDisabled = SMCComm.Power.isChargingDisabled()
         self.chargingDisabled = chargingDisabled
-        if !chargingDisabled {
+        if !chargingDisabled, case .legacy = SMCComm.Power.backend {
             //
-            // Sleep must always be disabled when charging is enabled.
+            // Sleep must always be disabled when charging is enabled, unless
+            // the system itself is holding the limit.
             //
             GlobalSleep.disable()
         }
 
-        let powerDisabled = SMCComm.Power.isPowerAdapterDisabled()
+        let powerDisabled = SMCComm.Power.powerAdapterSupported &&
+            SMCComm.Power.isPowerAdapterDisabled()
         self.powerDisabled = powerDisabled
         if powerDisabled {
             //
@@ -48,8 +50,28 @@ internal enum BTPowerState {
 
             if chargingDisabled {
                 GlobalSleep.restore()
-            } else {
+            } else if case .legacy = SMCComm.Power.backend {
                 GlobalSleep.disable()
+            }
+        }
+
+        //
+        // The system limit is shared with System Settings, so reassert it if
+        // something else raised it while we believe charging is held.
+        //
+        // Only a ceiling above the target is worth correcting: as the battery
+        // discharges the guard naturally leaves the ceiling above the current
+        // charge, and rewriting on every refresh would post a notification and
+        // poll the agent each time for no gain.
+        //
+        if case .mcl = SMCComm.Power.backend, self.chargingDisabled {
+            let (percent, _, _) = self.getPercentRemaining()
+            let target = Int(max(BTSettings.maxCharge, percent))
+            if let limit = SystemChargeLimit.agentLimit(), limit > target {
+                _ = SMCComm.Power.setChargingLimit(
+                    limit: BTSettings.maxCharge,
+                    currentPercent: percent
+                )
             }
         }
 
@@ -125,7 +147,23 @@ internal enum BTPowerState {
             return true
         }
 
-        let success = SMCComm.Power.disableCharging()
+        let success: Bool
+        switch SMCComm.Power.backend {
+        case .legacy:
+            success = SMCComm.Power.disableCharging()
+
+        case .mcl:
+            //
+            // Arm the ceiling at the configured maximum. The guard keeps it
+            // from landing below the current charge, which would make the Mac
+            // discharge from wall power to reach it.
+            //
+            success = SMCComm.Power.setChargingLimit(
+                limit: BTSettings.maxCharge,
+                currentPercent: percent
+            )
+        }
+
         guard success else {
             os_log("Failed to disable charging")
             return false
@@ -153,7 +191,13 @@ internal enum BTPowerState {
             return false
         }
 
-        GlobalSleep.disable()
+        //
+        // Only the legacy backend needs the machine awake: it drives every
+        // transition itself, while powerd keeps the limit through sleep.
+        //
+        if case .legacy = SMCComm.Power.backend {
+            GlobalSleep.disable()
+        }
 
         self.chargingDisabled = false
 
@@ -165,6 +209,16 @@ internal enum BTPowerState {
     }
 
     static func disablePowerAdapter() -> Bool {
+        //
+        // macOS 27 removed the adapter keys. Inhibiting the adapter there would
+        // mean running the Mac off its battery, which cycles it for no benefit,
+        // so the feature is refused rather than approximated.
+        //
+        guard SMCComm.Power.powerAdapterSupported else {
+            os_log("Power adapter control is unavailable on this Mac")
+            return false
+        }
+
         guard !self.powerDisabled else {
             return true
         }
