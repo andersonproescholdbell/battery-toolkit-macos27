@@ -38,6 +38,32 @@ internal enum BTPowerEvents {
             SMCComm.stop()
             throw BTError.unknown
         }
+
+        self.armSystemChargeLimit()
+    }
+
+    /// Parks the system charge limit at the configured maximum.
+    ///
+    /// The firmware enforces the limit by itself, including while asleep and
+    /// while the daemon is not running, so there is no reason to arm it only
+    /// when a threshold is crossed. Keeping it armed also means the battery is
+    /// never left unprotected between starting the daemon and the first time
+    /// the level reaches the maximum.
+    static func armSystemChargeLimit() {
+        guard case .mcl = SMCComm.Power.backend else {
+            return
+        }
+
+        let (percent, _, _) = BTPowerState.getPercentRemaining()
+        guard SMCComm.Power.setChargingLimit(
+            limit: BTSettings.maxCharge,
+            currentPercent: percent
+        ) else {
+            os_log("Failed to arm system charge limit")
+            return
+        }
+
+        os_log("System charge limit armed at \(BTSettings.maxCharge)")
     }
 
     private static func restoreState() {
@@ -94,6 +120,8 @@ internal enum BTPowerEvents {
     }
 
     static func settingsChanged() {
+        self.armSystemChargeLimit()
+
         guard self.percentCreated else {
             return
         }
@@ -261,7 +289,15 @@ internal enum BTPowerEvents {
                 _ = BTPowerEvents.disableCharging(percent: percent)
             }
         } else if percent < BTSettings.minCharge {
-            _ = BTPowerState.enableCharging(percent: percent)
+            //
+            // Only the legacy backend needs charging re-enabled: it inhibits
+            // charging outright. On the MCL backend the ceiling stays armed and
+            // the firmware tops the battery up beneath it, so lifting the
+            // ceiling here would let it charge past the limit.
+            //
+            if case .legacy = SMCComm.Power.backend {
+                _ = BTPowerState.enableCharging(percent: percent)
+            }
         }
 
         return percent
