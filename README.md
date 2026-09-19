@@ -111,9 +111,12 @@ identity, change these (each appears twice, once per configuration):
 | Setting | Note |
 | --- | --- |
 | `DEVELOPMENT_TEAM` | your certificate's **OU**, *not* the ID in its common name |
-| `BT_CODESIGN_CN` | the exact common name, including the parenthesised ID |
+| `BT_CODESIGN_CN` | the exact common name, including the parenthesised ID — committed as a `YOUR NAME (XXXXXXXXXX)` placeholder, so **the build fails until you set it** |
 | `BT_DAEMON_CONN` | `<team id>.<daemon bundle id>` |
 | `CODE_SIGN_INJECT_BASE_ENTITLEMENTS` | already `NO` — leave it |
+
+`security find-identity -v -p codesigning` prints the exact common name and
+the certificate's OU to use.
 
 Two things that are easy to miss:
 
