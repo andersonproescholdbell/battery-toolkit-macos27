@@ -9,17 +9,17 @@
 		<key>SuccessfulExit</key>
 		<false/>
 	</dict>
-	<key>BundleProgram</key>
-	<string>Contents/Library/LaunchServices/me.mhaeuser.batterytoolkitd</string>
+	<key>AssociatedBundleIdentifiers</key>
+	<string>io.github.andersonproescholdbell.BatteryToolkit</string>
 	<key>Label</key>
-	<string>me.mhaeuser.batterytoolkitd</string>
+	<string>io.github.andersonproescholdbell.batterytoolkitd</string>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>EnableTransactions</key>
 	<false/>
 	<key>MachServices</key>
 	<dict>
-		<key>7FH5WYQ6C5.me.mhaeuser.batterytoolkitd</key>
+		<key>7FH5WYQ6C5.io.github.andersonproescholdbell.batterytoolkitd</key>
 		<true/>
 	</dict>
 </dict>

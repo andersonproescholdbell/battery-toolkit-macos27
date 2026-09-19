@@ -8,16 +8,16 @@
 ##
 
 # Remove the Battery Toolkit daemon.
-sudo rm /Library/LaunchDaemons/me.mhaeuser.batterytoolkitd.plist
-sudo rm /Library/PrivilegedHelperTools/me.mhaeuser.batterytoolkitd
-sudo launchctl remove me.mhaeuser.batterytoolkitd
+sudo rm /Library/LaunchDaemons/io.github.andersonproescholdbell.batterytoolkitd.plist
+sudo rm /Library/PrivilegedHelperTools/io.github.andersonproescholdbell.batterytoolkitd
+sudo launchctl remove io.github.andersonproescholdbell.batterytoolkitd
 
 # Remove the Battery Toolkit daemon data.
-sudo defaults delete me.mhaeuser.batterytoolkitd
-sudo security authorizationdb remove me.mhaeuser.batterytoolkitd.manage
+sudo defaults delete io.github.andersonproescholdbell.batterytoolkitd
+sudo security authorizationdb remove io.github.andersonproescholdbell.batterytoolkitd.manage
 
 # Remove the Battery Toolkit Autostart helper.
-launchctl remove me.mhaeuser.BatteryToolkitAutostart
+launchctl remove io.github.andersonproescholdbell.BatteryToolkitAutostart
 
 # Remove the Battery Toolkit app data.
-defaults remove me.mhaeuser.BatteryToolkit
+defaults remove io.github.andersonproescholdbell.BatteryToolkit

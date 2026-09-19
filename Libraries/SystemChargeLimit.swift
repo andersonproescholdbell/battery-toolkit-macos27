@@ -122,7 +122,7 @@ public enum SystemChargeLimit {
         }
 
         let object = unsafeBitCast(allocated, to: PowerUIClient.self)
-            .initWithClientName("me.mhaeuser.batterytoolkitd")
+            .initWithClientName("io.github.andersonproescholdbell.batterytoolkitd")
         return unsafeBitCast(object, to: PowerUIClient.self)
     }
 
