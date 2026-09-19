@@ -1002,6 +1002,7 @@
 				MARKETING_VERSION = 1.9;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				OTHER_CODE_SIGN_FLAGS = "-o hard,kill,restrict,enforce,library-validation,library,runtime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -1136,6 +1137,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				OTHER_CODE_SIGN_FLAGS = "-o hard,kill,restrict,enforce,library-validation,library,runtime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
