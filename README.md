@@ -105,44 +105,124 @@ beforehand.
 
 ## Building
 
-Requires Xcode and an Apple Development certificate. To build under your own
-identity, change these (each appears twice, once per configuration):
+Everything below is a local build. There are no releases: a free Apple
+Development certificate cannot distribute software, and the signature expires
+after about a week.
 
-| Setting | Note |
-| --- | --- |
-| `DEVELOPMENT_TEAM` | your certificate's **OU**, *not* the ID in its common name |
-| `BT_CODESIGN_CN` | the exact common name, including the parenthesised ID — committed as a `YOUR NAME (XXXXXXXXXX)` placeholder, so **the build fails until you set it** |
-| `BT_DAEMON_CONN` | `<team id>.<daemon bundle id>` |
-| `CODE_SIGN_INJECT_BASE_ENTITLEMENTS` | already `NO` — leave it |
+**Requirements:** macOS 27, Xcode, and an Apple Development certificate. If you
+have no certificate, make one in Xcode: *Settings → Accounts → (your Apple ID) →
+Manage Certificates → + → Apple Development*.
 
-`security find-identity -v -p codesigning` prints the exact common name and
-the certificate's OU to use.
+### 1. Clone
 
-Two things that are easy to miss:
+```sh
+git clone https://github.com/andersonproescholdbell/battery-toolkit-macos27.git
+cd battery-toolkit-macos27
+```
 
-- The team ID also appears **literally**, not through a build setting, in
-  `BatteryToolkit/BatteryToolkit.entitlements` and both daemon plists. Miss one
-  and the app hangs at "connecting" while the daemon refuses it.
-- `xcodebuild build` injects `com.apple.security.get-task-allow` in *every*
-  configuration, Release included; only archive/export strips it. `SMAppService`
-  refuses to register a privileged daemon carrying it, failing with
-  `"Operation not permitted"`. Hence `CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO`,
-  at the cost of not being able to attach a debugger.
+### 2. Point it at your certificate
 
-Bundle identifiers were renamed to `io.github.andersonproescholdbell.*` because
-Background Task Management keys its records on the bundle identifier, and a
-stale record from the upstream build — marked `disallowed` and signed by a
-different team — blocked registration. `sfltool` has no per-item delete, and
-`sfltool resetbtm` would clear every application's approvals, so renaming was
-the targeted fix.
+```sh
+Tools/setup-signing.sh
+```
+
+This reads your signing certificate and rewrites the project to match: the
+common name, the team identifier, and the bundle identifiers. It prints what it
+changed. Use `--dry-run` first if you want to see the plan, `--bundle-prefix
+com.example` to choose your own identifiers, and `--identity <n>` if you hold
+more than one certificate.
+
+**Do not commit what it writes** — it is your local signing configuration. To
+keep it out of `git status`:
+
+```sh
+git update-index --skip-worktree "Battery Toolkit.xcodeproj/project.pbxproj"
+```
+
+Re-run the script whenever your certificate is renewed; it is idempotent.
+
+### 3. Build
 
 ```sh
 xcodebuild -project "Battery Toolkit.xcodeproj" -scheme "Battery Toolkit" \
   -configuration Release -derivedDataPath build build
 ```
 
-A free Apple Development certificate expires after a week. When it does, the
-daemon stops validating and the app needs rebuilding.
+### 4. Check the daemon before installing
+
+```sh
+codesign -d --entitlements - \
+  "build/Build/Products/Release/Battery Toolkit.app/Contents/Library/LaunchServices/"*batterytoolkitd
+```
+
+The output must **not** contain `get-task-allow`. If it does, registration will
+fail later with `"Operation not permitted"` and no useful error in the app.
+
+### 5. Install
+
+```sh
+cp -R "build/Build/Products/Release/Battery Toolkit.app" /Applications/
+open "/Applications/Battery Toolkit.app"
+```
+
+Approve the daemon when macOS asks, or enable it under *System Settings →
+General → Login Items & Extensions*.
+
+### 6. Confirm it works
+
+A **menu bar icon** is the success signal — there is no main window, and the
+settings live behind that icon. To check the daemon itself:
+
+```sh
+log show --predicate 'process CONTAINS "batterytoolkitd"' --last 5m \
+  --info --debug --style compact | grep -E "preflight|armed"
+```
+
+Expect `MCL preflight passed` and `System charge limit armed at <your maximum>`.
+Then confirm the limit reached the system:
+
+```sh
+sudo defaults read com.apple.smartcharging.topoffprotection mclLimitValue
+```
+
+### Troubleshooting
+
+Every row here is a failure hit and diagnosed while building this fork.
+
+| Symptom | Cause |
+| --- | --- |
+| No menu bar icon, nothing in the log | daemon is not running — `pgrep -lf batterytoolkitd` |
+| `"Operation not permitted"` when registering | the daemon carries `get-task-allow`; see step 4 |
+| App sits at "connecting" | team identifier mismatch between the project file and the plists or entitlements — re-run `Tools/setup-signing.sh` |
+| Daemon respawns every ~10 s | it is crash-looping; read `/Library/Logs/DiagnosticReports/*batterytoolkitd-*.ips` |
+| Login Items toggle is on, but "Not running in background" | stale Background Task Management record — `sudo sfltool dumpbtm \| grep -A6 batterytoolkitd` and look for `disallowed`. Renaming the bundle prefix is the targeted fix; `sfltool resetbtm` clears every app's approvals |
+| Worked, then stopped after about a week | the development certificate expired — re-run step 2 and rebuild |
+
+### Why the setup script exists
+
+Battery Toolkit ships a privileged daemon, and the app and daemon each verify
+the other's code signature. That requirement is built from the certificate's
+common name, and the Mach service name from the team identifier. Both appear in
+the project file *and* literally in `BatteryToolkit/BatteryToolkit.entitlements`,
+`BatteryToolkit/Info.plist`, `uninstall.sh` and both daemon plists — 34 project
+settings and five files in total. The daemon's directory name is also
+load-bearing: its `Info.plist` and embedded `launchd.plist` resolve through
+`PRODUCT_NAME`, so the directory has to match the target.
+
+The team identifier is the certificate's **OU**, not the identifier inside its
+common name. Getting that wrong produces an app that builds and installs and
+then never connects.
+
+Bundle identifiers must be changed rather than reused: Background Task
+Management keys its records on the bundle identifier, so inheriting another
+build's identifiers inherits its record — including a `disallowed` one, which
+silently prevents the daemon from ever starting.
+
+`xcodebuild build` also injects `com.apple.security.get-task-allow` in every
+configuration, Release included; only archive/export strips it. `SMAppService`
+refuses to register a privileged daemon carrying it. Hence
+`CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO` in the project, at the cost of not
+being able to attach a debugger.
 
 ## Tools
 
@@ -151,6 +231,7 @@ had changed.
 
 | Tool | Purpose |
 | --- | --- |
+| `setup-signing.sh` | points a clone at your certificate and bundle identifiers (see [Building](#building)) |
 | `smcprobe.swift` | read-only dump of every charge-related SMC key, with type, size, attributes and value |
 | `smcenum.swift` | enumerates the whole SMC key index — this is what proved the `bf*` keys are hollow rather than absent |
 | `mcltest.swift` | reports `isMCLSupported`, `isMCLCurrentlyEnabled` and the current limit |
