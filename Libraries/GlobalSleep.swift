@@ -48,7 +48,16 @@ public enum GlobalSleep {
     }
 
     static func restore() {
-        assert(self.disabledCounter > 0)
+        //
+        // The counter is unsigned, and assert() is compiled out of release
+        // builds, so an unbalanced restore() used to underflow and trap. In a
+        // daemon that means a crash loop, so refuse the decrement instead.
+        //
+        guard self.disabledCounter > 0 else {
+            os_log("Unbalanced GlobalSleep.restore()")
+            return
+        }
+
         self.disabledCounter -= 1
 
         guard self.disabledCounter == 0 else {

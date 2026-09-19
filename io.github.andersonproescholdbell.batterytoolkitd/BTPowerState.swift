@@ -48,10 +48,12 @@ internal enum BTPowerState {
         if chargingDisabled != self.chargingDisabled {
             self.chargingDisabled = chargingDisabled
 
-            if chargingDisabled {
-                GlobalSleep.restore()
-            } else if case .legacy = SMCComm.Power.backend {
-                GlobalSleep.disable()
+            if case .legacy = SMCComm.Power.backend {
+                if chargingDisabled {
+                    GlobalSleep.restore()
+                } else {
+                    GlobalSleep.disable()
+                }
             }
         }
 
@@ -175,7 +177,14 @@ internal enum BTPowerState {
             BTPowerState.syncMagSafeStatePowerEnabled(percent: percent)
         }
 
-        GlobalSleep.restore()
+        //
+        // Balances the disable() in enableCharging, which only runs on the
+        // legacy backend. powerd holds the limit through sleep, so on the MCL
+        // backend neither half applies.
+        //
+        if case .legacy = SMCComm.Power.backend {
+            GlobalSleep.restore()
+        }
 
         return true
     }
