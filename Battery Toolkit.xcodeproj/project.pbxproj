@@ -885,7 +885,7 @@
 				BT_APP_ID = me.mhaeuser.BatteryToolkit;
 				BT_AUTOSTART_ID = me.mhaeuser.BatteryToolkitAutostart;
 				BT_CODESIGN_CN = "Apple Development: YOUR NAME (XXXXXXXXXX)";
-				BT_DAEMON_CONN = 32L27BNC8R.me.mhaeuser.batterytoolkitd;
+				BT_DAEMON_CONN = 7FH5WYQ6C5.me.mhaeuser.batterytoolkitd;
 				BT_DAEMON_ID = me.mhaeuser.batterytoolkitd;
 				BT_SERVICE_ID = me.mhaeuser.BatteryToolkitService;
 				CLANG_ANALYZER_GCD_PERFORMANCE = YES;
@@ -948,7 +948,7 @@
 				CURRENT_PROJECT_VERSION = 1.9;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 32L27BNC8R;
+				DEVELOPMENT_TEAM = 7FH5WYQ6C5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1022,7 +1022,7 @@
 				BT_APP_ID = me.mhaeuser.BatteryToolkit;
 				BT_AUTOSTART_ID = me.mhaeuser.BatteryToolkitAutostart;
 				BT_CODESIGN_CN = "Apple Development: YOUR NAME (XXXXXXXXXX)";
-				BT_DAEMON_CONN = 32L27BNC8R.me.mhaeuser.batterytoolkitd;
+				BT_DAEMON_CONN = 7FH5WYQ6C5.me.mhaeuser.batterytoolkitd;
 				BT_DAEMON_ID = me.mhaeuser.batterytoolkitd;
 				BT_SERVICE_ID = me.mhaeuser.BatteryToolkitService;
 				CLANG_ANALYZER_GCD_PERFORMANCE = YES;
@@ -1085,7 +1085,7 @@
 				CURRENT_PROJECT_VERSION = 1.9;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 32L27BNC8R;
+				DEVELOPMENT_TEAM = 7FH5WYQ6C5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
