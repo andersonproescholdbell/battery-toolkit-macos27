@@ -158,14 +158,23 @@ rewrite "$OLD_DAEMON_DIR/${OLD_DAEMON_DIR}.plist"
 # 5. The daemon target's Info.plist and embedded launchd.plist resolve through
 #    PRODUCT_NAME, so the directory has to match the target name.
 #
-if [ "$OLD_DAEMON_DIR" != "$NEW_DAEMON_DIR" ] && [ -d "$OLD_DAEMON_DIR" ]; then
-    if git rev-parse --git-dir >/dev/null 2>&1; then
-        git mv "$OLD_DAEMON_DIR" "$NEW_DAEMON_DIR"
-        git mv "$NEW_DAEMON_DIR/${OLD_DAEMON_DIR}.plist" "$NEW_DAEMON_DIR/${NEW_DAEMON_DIR}.plist"
+move() {
+    # move <from> <to> - keep git's index in step when the path is tracked.
+    #
+    # Ask whether git has this path in its index rather than whether some
+    # enclosing directory is a repository: an archive unpacked inside an
+    # unrelated checkout answers yes to the latter, and `git mv` then fails on
+    # a path it does not know, aborting midway through the rewrite.
+    if [ -n "$(git ls-files -- "$1" 2>/dev/null)" ]; then
+        git mv "$1" "$2"
     else
-        mv "$OLD_DAEMON_DIR" "$NEW_DAEMON_DIR"
-        mv "$NEW_DAEMON_DIR/${OLD_DAEMON_DIR}.plist" "$NEW_DAEMON_DIR/${NEW_DAEMON_DIR}.plist"
+        mv "$1" "$2"
     fi
+}
+
+if [ "$OLD_DAEMON_DIR" != "$NEW_DAEMON_DIR" ] && [ -d "$OLD_DAEMON_DIR" ]; then
+    move "$OLD_DAEMON_DIR" "$NEW_DAEMON_DIR"
+    move "$NEW_DAEMON_DIR/${OLD_DAEMON_DIR}.plist" "$NEW_DAEMON_DIR/${NEW_DAEMON_DIR}.plist"
 fi
 
 #
