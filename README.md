@@ -164,13 +164,13 @@ None of them write anything except `preflight`, which is also read-only.
 
 | Commit | Change |
 | --- | --- |
-| `cece958` | MCL backend, preflight, drain guard; adapter key made optional |
-| `00ac383` | sign under a private team |
-| `90be8b3` | stop injecting debug entitlements into the daemon |
-| `e580fbd` | own bundle identifiers |
-| `d9767b6` | balance the sleep counter (it underflowed and crash-looped the daemon) |
-| `74d46af` | time out waiting for the daemon to identify itself |
-| `4b99ba1` | keep the charge limit armed instead of toggling it |
+| `bc759e6` | MCL backend, preflight, drain guard; adapter key made optional |
+| `d59c9c9` | sign under a private team |
+| `2195e06` | stop injecting debug entitlements into the daemon |
+| `ec03fca` | own bundle identifiers |
+| `db0dd82` | balance the sleep counter (it underflowed and crash-looped the daemon) |
+| `0dff203` | time out waiting for the daemon to identify itself |
+| `58a4bc0` | keep the charge limit armed instead of toggling it |
 
 ## Credits
 
