@@ -9,6 +9,16 @@ import os.log
 import ServiceManagement
 
 internal enum BTLoginItem {
+    /// Whether the system really has the login item enabled, or nil when it
+    /// cannot be queried (pre-macOS 13).
+    static var isEnabled: Bool? {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        }
+
+        return nil
+    }
+
     static func enable() -> Bool {
         if #available(macOS 13.0, *) {
             return self.enableService()

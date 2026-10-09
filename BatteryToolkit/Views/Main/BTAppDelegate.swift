@@ -55,6 +55,21 @@ internal final class BTAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The daemon retries its start-up checks for about a minute after boot, so
+    /// a single "unsupported" reply this early must not trigger the uninstall
+    /// prompt.
+    private func waitUntilSupported() async throws {
+        for _ in 0 ..< 14 {
+            do {
+                return try await BTDaemonXPCClient.isSupported()
+            } catch BTError.unsupported {
+                try await Task.sleep(nanoseconds: 5 * 1_000_000_000)
+            }
+        }
+
+        try await BTDaemonXPCClient.isSupported()
+    }
+
     private func daemonStatusHandler(status: BTDaemonManagement.Status) async {
         switch status {
         case .notRegistered:
@@ -69,7 +84,7 @@ internal final class BTAppDelegate: NSObject, NSApplicationDelegate {
             os_log("Daemon is enabled")
 
             do {
-                try await BTDaemonXPCClient.isSupported()
+                try await self.waitUntilSupported()
                 self.disableBackgroundItem.isEnabled = true
                 self.settingsItem.isEnabled = true
                 self.commandsMenuItem.isHidden = false

@@ -86,16 +86,19 @@ public enum SystemChargeLimit {
     private(set) static var originalLimit: Int?
 
     static func prepare() {
-        guard self.client == nil else {
-            return
+        //
+        // Re-ask PowerUI on every call: right after boot it can answer
+        // "unsupported" before the agent is up, and that must not stick.
+        //
+        if self.client == nil {
+            self.client = self.makeClient()
         }
 
-        guard let client = self.makeClient() else {
+        guard let client = self.client else {
             self.supported = false
             return
         }
 
-        self.client = client
         self.supported = client.isMCLSupported()
 
         guard self.supported else {

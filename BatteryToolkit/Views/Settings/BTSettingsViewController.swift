@@ -207,7 +207,11 @@ internal final class BTSettingsViewController: NSViewController {
     }
     
     private func initUserState() {
-        let autostart = UserDefaults.standard.bool(
+        //
+        // Prefer the system's state: the stored preference goes stale when the
+        // login item is disabled elsewhere, e.g. in System Settings.
+        //
+        let autostart = BTLoginItem.isEnabled ?? UserDefaults.standard.bool(
             forKey: self.autostartSetting
         )
         self.autostartSwitch.state = autostart ? .on : .off

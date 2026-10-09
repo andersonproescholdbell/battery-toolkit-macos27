@@ -102,6 +102,67 @@ internal enum BTDaemon {
         BTPowerEvents.stop()
     }
 
+    /// Start attempts after the first one, and the delay between them. The
+    /// client waits slightly longer than this before treating the machine as
+    /// unsupported.
+    private static let startRetries = 12
+    private static let startRetryDelayNanoseconds: UInt64 = 5 * 1_000_000_000
+
+    private static func retryStart(attempt: Int) {
+        guard attempt <= self.startRetries else {
+            os_log("Machine still unsupported after \(self.startRetries) retries")
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: self.startRetryDelayNanoseconds)
+            do {
+                try self.start()
+                os_log("Start succeeded on retry \(attempt)")
+                self.activate()
+            } catch BTError.unsupported {
+                self.retryStart(attempt: attempt + 1)
+            } catch {
+                os_log("Power events start failed")
+                exit(-1)
+            }
+        }
+    }
+
+    /// Finish initialisation once `start()` has succeeded.
+    private static func activate() {
+        self.enabled = true
+        self.supported = true
+
+        let termSource = DispatchSource.makeSignalSource(
+            signal: SIGTERM,
+            queue: DispatchQueue.main
+        )
+        termSource.setEventHandler {
+            BTPowerEvents.exit()
+            exit(0)
+        }
+        termSource.resume()
+        //
+        // Preserve termSource globally, so it is not deallocated.
+        //
+        self.termSource = termSource
+        //
+        // Ignore SIGTERM to catch it above and gracefully stop the service.
+        //
+        signal(SIGTERM, SIG_IGN)
+
+        let status = SimpleAuth.duplicateRight(
+            rightName: BTAuthorizationRights.manage,
+            templateName: kAuthorizationRuleAuthenticateAsAdmin,
+            comment: "Used by \(BT_DAEMON_ID) to allow access to its privileged functions",
+            timeout: 300
+        )
+        if status != errSecSuccess {
+            os_log("Error adding manage right: \(status)")
+        }
+    }
+
     private static func main() {
         //
         // Cache the unique ID immediately, as this is not safe against
@@ -116,42 +177,16 @@ internal enum BTDaemon {
 
         do {
             try self.start()
-            self.enabled = true
-            self.supported = true
-
-            let termSource = DispatchSource.makeSignalSource(
-                signal: SIGTERM,
-                queue: DispatchQueue.main
-            )
-            termSource.setEventHandler {
-                BTPowerEvents.exit()
-                exit(0)
-            }
-            termSource.resume()
-            //
-            // Preserve termSource globally, so it is not deallocated.
-            //
-            self.termSource = termSource
-            //
-            // Ignore SIGTERM to catch it above and gracefully stop the service.
-            //
-            signal(SIGTERM, SIG_IGN)
-
-            let status = SimpleAuth.duplicateRight(
-                rightName: BTAuthorizationRights.manage,
-                templateName: kAuthorizationRuleAuthenticateAsAdmin,
-                comment: "Used by \(BT_DAEMON_ID) to allow access to its privileged functions",
-                timeout: 300
-            )
-            if status != errSecSuccess {
-                os_log("Error adding manage right: \(status)")
-            }
+            self.activate()
         } catch BTError.unsupported {
             //
             // Still run the XPC server if the machine is unsupported to cleanly
             // uninstall the daemon, but don't initialize the rest of the stack.
+            // Right after boot the checks can fail only because PowerUIAgent or
+            // the battery are not up yet, so keep trying for a while.
             //
             self.supported = false
+            self.retryStart(attempt: 1)
         } catch {
             os_log("Power events start failed")
             exit(-1)
