@@ -496,20 +496,20 @@
 				CE8A1EC92C1C9AEE004FB549 /* MachTaskSelf */,
 				CE6C06B828A84C2400D76CC8 /* BTPreprocessor */,
 				CE6C06A328A84A9200D76CC8 /* IOPMPrivate */,
-				CED8DD3628C364D60082C02A /* NSXPCConnection+AuditToken */,
+				CED8DD3628C364D60082C02A /* NSXPCConnectionAuditToken */,
 				CEF3496D28DCD34900A1CECD /* SecCodeEx */,
 				CEB4671C2843C80D00D7CB01 /* SMCParamStruct */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
 		};
-		CED8DD3628C364D60082C02A /* NSXPCConnection+AuditToken */ = {
+		CED8DD3628C364D60082C02A /* NSXPCConnectionAuditToken */ = {
 			isa = PBXGroup;
 			children = (
 				CED8DD3728C364FA0082C02A /* module.modulemap */,
 				CEA80FD3285A51600064ADEA /* NSXPCConnection+AuditToken.h */,
 			);
-			path = "NSXPCConnection+AuditToken";
+			path = NSXPCConnectionAuditToken;
 			sourceTree = "<group>";
 		};
 		CEECE31928BB648F00821A3B /* BatteryToolkitService */ = {
@@ -998,7 +998,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_NAME)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Marvin Häuser. All rights reserved.";
 				LLVM_LTO = YES_THIN;
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.9;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1134,7 +1134,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_NAME)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Marvin Häuser. All rights reserved.";
 				LLVM_LTO = YES_THIN;
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
