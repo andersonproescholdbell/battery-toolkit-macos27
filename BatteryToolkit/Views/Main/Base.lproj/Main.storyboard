@@ -173,6 +173,9 @@
                                         <menuItem title="Charging On Hold" hidden="YES" enabled="NO" id="jSw-yh-dVi">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                         </menuItem>
+                                        <menuItem title="Charging to 100 % (macOS Battery Calibration)" hidden="YES" enabled="NO" id="Cal-Ib-0Aa">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
                                         <menuItem title="Requested Charging to Limit" hidden="YES" enabled="NO" id="gt7-Wq-hIQ">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                         </menuItem>
@@ -270,6 +273,7 @@
                         <outlet property="infoChargingToFullItem" destination="F8E-0n-LBJ" id="mor-ef-cIF"/>
                         <outlet property="infoChargingToLimitItem" destination="nWm-0d-xw6" id="8gP-z0-yth"/>
                         <outlet property="infoChargingUnknownModeItem" destination="tXk-Dr-ZCO" id="993-kf-WOn"/>
+                        <outlet property="infoCalibratingItem" destination="Cal-Ib-0Bb" id="Cal-Ou-0Bb"/>
                         <outlet property="infoNotChargingItem" destination="QRX-If-BNP" id="pws-tg-vIR"/>
                         <outlet property="infoNotChargingUnknownModeItem" destination="K5N-g3-QcY" id="W5T-N2-cV8"/>
                         <outlet property="infoPausedItem" destination="oBQ-be-xxD" id="10R-0m-Y74"/>
@@ -295,6 +299,7 @@
                         <outlet property="infoChargingToFullItem" destination="lac-Zb-b2m" id="O54-37-b26"/>
                         <outlet property="infoChargingToLimitItem" destination="lbk-yR-YAv" id="SHM-JV-1t7"/>
                         <outlet property="infoChargingUnknownModeItem" destination="4Kg-1R-KWJ" id="mnc-pc-oBy"/>
+                        <outlet property="infoCalibratingItem" destination="Cal-Ib-0Aa" id="Cal-Ou-0Aa"/>
                         <outlet property="infoNotChargingItem" destination="jSw-yh-dVi" id="uMz-ij-r7A"/>
                         <outlet property="infoNotChargingUnknownModeItem" destination="ptj-AT-ybP" id="4bQ-Ri-CwK"/>
                         <outlet property="infoPausedItem" destination="Vgl-Kg-Sv3" id="GvS-oi-RNg"/>
@@ -335,6 +340,9 @@
                             <modifierMask key="keyEquivalentModifierMask"/>
                         </menuItem>
                         <menuItem title="Charging On Hold" hidden="YES" enabled="NO" id="QRX-If-BNP">
+                            <modifierMask key="keyEquivalentModifierMask"/>
+                        </menuItem>
+                        <menuItem title="Charging to 100 % (macOS Battery Calibration)" hidden="YES" enabled="NO" id="Cal-Ib-0Bb">
                             <modifierMask key="keyEquivalentModifierMask"/>
                         </menuItem>
                         <menuItem title="Requested Charging to Limit" hidden="YES" enabled="NO" id="dq4-4h-B2m">
