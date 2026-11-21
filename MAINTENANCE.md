@@ -3,6 +3,69 @@
 Findings from checking this fork after macOS updates. Newest first. Facts are
 marked as verified or not; hypotheses are labelled as such.
 
+## 2026-11-21 - charged to 100% overnight on macOS 27.2.1 (26B131)
+
+Report: plugged in at 34% on 2026-11-20 20:21, reached 99% by 21:51 with the
+limit at 60%.
+
+### Verified
+
+- The daemon applied the limit. PowerUIAgent logged `Limiting charging to 60%
+  SoC` and `MCL target: 60%` on plug-in.
+- macOS suspended it for battery gauge calibration. At 19:32 powerd logged
+  `periodicChargeToFullCheck run gauging mitigation policy` ("Last Qmax change
+  was 12.3 days ago"), then PowerUIAgent `Gauging mitigation state changed,
+  new state: 1`. While on AC: PowerUIAgent `ChargingUpForGauging (mode: 7)`
+  and `Battery mitigations are in place, MCL will be ignored`, powerd `SOC
+  limit policy suspend due to mitigation active:1`. No supported lever
+  overrides this, and blocking it would let the battery percentage drift, so
+  the app now reports it instead.
+- Unplugging at 99% left the mitigation active overnight. It cleared without a
+  full charge at the next plug-in (2026-11-21 13:21:56, at 89%): PowerUIAgent
+  `Current mitigation state changed to: 0`. What clears it is not known.
+- `PowerUISmartChargeClient smartChargingUIState:chargeLimit:chargingOverrideAllowed:withError:`
+  (encoding `B48@0:8^Q16^Q24^B32^@40`) returned state 18 while the agent
+  logged `ChargingUpForGauging`. `SystemChargeLimit.gaugingUIState` holds
+  that value. It is a single observation, so recheck it after OS updates.
+  Also observed: 16 `DischargingToMCL`, 14 `PausedForMCL`.
+- The drain happened as predicted. After the 13:21 plug-in at 89% with the
+  limit still 60, PowerUIAgent reported `DischargingToMCL`: on AC, not
+  charging, discharging toward 60.
+- The menu showed "Charging On Hold" throughout: it reflected a cached flag,
+  not the system.
+- The daemon logged nothing about any of this.
+- The development certificate expired on 2026-11-09 (`security find-identity
+  -v -p codesigning` lists 0 identities). The installed build keeps running,
+  but a rebuild needs the certificate renewed in Xcode first.
+- Xcode 27.1 rejects deployment target 11.0, and its Swift no longer finds a
+  module whose directory name differs from the module name
+  (`NSXPCConnection+AuditToken` vs `NSXPCConnectionAuditToken`).
+
+### Changes made
+
+- The daemon logs when calibration starts and ends overriding the limit
+  (`macOS battery calibration is overriding the charge limit`), and the menu
+  shows "Charging to 100 % (macOS Battery Calibration)" instead of "Charging
+  On Hold" while it does. Preflight reports the selector as a non-fatal check.
+- On MCL, `BTPowerState.disableCharging(percent:)` no longer returns early on
+  the cached flag. It reconciles the ceiling to max(maximum, charge) whenever
+  the agent's limit differs, and the hysteresis calls it below the maximum
+  too. Before: the limit stayed at 60 with the battery at 92%, so after
+  calibration powerd would drain from wall power to 60. A ceiling raised while
+  above the maximum also survived a plug-in at a lower charge.
+- Deployment target 12.0, module directory renamed, `kIOMainPortDefault`.
+
+- Installed after renewing the certificate (same team, same CN, so the
+  daemon requirement still matches). On start, the new daemon moved the
+  limit from 60 to 88 at 88% on AC. PowerUI went from `DischargingToMCL` to
+  `PausedForMCL`, and preflight shows bit24 hold set and bit12 drain clear.
+  The daemon now logs the applied value: `armed at 88 (maximum 60)`.
+
+### Not verified
+
+- The menu's calibration line on a real calibration. None was active after
+  the install.
+
 ## 2026-10-09 - health check on macOS 27.0.1 (26A434)
 
 Context: macOS moved from 27.0 (26A428) to 27.0.1 (26A434) after the original
