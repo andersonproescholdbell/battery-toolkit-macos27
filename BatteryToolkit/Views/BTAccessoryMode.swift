@@ -42,7 +42,7 @@ internal enum BTAccessoryMode {
         //
         self.inactivateApp()
         Task {
-            try await Task.sleep(nanoseconds: 100_000_000)
+            try? await Task.sleep(nanoseconds: 100_000_000)
             NSApp.activate(ignoringOtherApps: true)
             self.ignoreCall = false
         }

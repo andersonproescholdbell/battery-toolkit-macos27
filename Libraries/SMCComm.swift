@@ -87,7 +87,7 @@ public enum SMCComm {
         assert(self.connect == IO_OBJECT_NULL)
 
         let smc = IOServiceGetMatchingService(
-            kIOMasterPortDefault,
+            kIOMainPortDefault,
             IOServiceMatching("AppleSMC")
         )
         guard smc != IO_OBJECT_NULL else {

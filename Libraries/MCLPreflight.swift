@@ -215,7 +215,7 @@ public enum MCLPreflight {
 
     private static func batteryProperties() -> [String: Any]? {
         let service = IOServiceGetMatchingService(
-            kIOMasterPortDefault,
+            kIOMainPortDefault,
             IOServiceMatching("AppleSmartBattery")
         )
         guard service != IO_OBJECT_NULL else {
