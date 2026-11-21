@@ -16,6 +16,7 @@ internal enum BTPowerEvents {
 
     private static var powerCreated = false
     private static var percentCreated = false
+    private static var calibrating = false
 
     static func start() throws {
         let smcSuccess = SMCComm.start()
@@ -271,6 +272,8 @@ internal enum BTPowerEvents {
         guard let (percent, _, _) = IOPSPrivate.GetPercentRemaining() else {
             return 100
         }
+
+        self.logCalibrationChange()
         //
         // The hysteresis does not apply when starting the daemon, as
         // micro-charges will already happen pre-boot and there is no point to
@@ -301,6 +304,29 @@ internal enum BTPowerEvents {
         }
 
         return percent
+    }
+
+    //
+    // macOS periodically charges to 100% to recalibrate the battery gauge and
+    // suspends the limit while it does. Log it, as nothing else in our logs
+    // would explain a full charge.
+    //
+    private static func logCalibrationChange() {
+        guard case .mcl = SMCComm.Power.backend else {
+            return
+        }
+
+        let calibrating = SystemChargeLimit.isCalibrating
+        guard calibrating != self.calibrating else {
+            return
+        }
+
+        self.calibrating = calibrating
+        if calibrating {
+            os_log("macOS battery calibration is overriding the charge limit")
+        } else {
+            os_log("macOS battery calibration finished, charge limit applies again")
+        }
     }
 
     private static func drawingUnlimitedPower() -> Bool {

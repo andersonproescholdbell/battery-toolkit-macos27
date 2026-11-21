@@ -30,6 +30,13 @@ import os.log
     @objc(isMCLCurrentlyEnabled:) func isMCLCurrentlyEnabled(_ error: NSErrorPointer) -> UInt64
     @objc(enableMCL:) func enableMCL(_ error: NSErrorPointer) -> Bool
     @objc(getMCLLimitWithError:) func getMCLLimit(_ error: NSErrorPointer) -> UInt8
+    @objc(smartChargingUIState:chargeLimit:chargingOverrideAllowed:withError:)
+    func smartChargingUIState(
+        _ state: UnsafeMutablePointer<UInt64>,
+        chargeLimit: UnsafeMutablePointer<UInt64>,
+        chargingOverrideAllowed: UnsafeMutablePointer<ObjCBool>,
+        withError error: NSErrorPointer
+    ) -> Bool
 }
 
 public enum SystemChargeLimitError: Error, CustomStringConvertible {
@@ -74,6 +81,14 @@ public enum SystemChargeLimit {
     // Below this the machine is not meaningfully charging at all.
     //
     private static let absoluteMinimum = 20
+
+    //
+    // The UI state PowerUI reports while powerd's gauging mitigation charges to
+    // 100% to recalibrate the battery gauge, ignoring the limit. Observed on
+    // 27.2.1 (26B131) while PowerUIAgent logged "ChargingUpForGauging
+    // (mode: 7)". Recheck it after OS updates.
+    //
+    static let gaugingUIState: UInt64 = 18
 
     private static var client: PowerUIClient?
 
@@ -150,6 +165,37 @@ public enum SystemChargeLimit {
 
         var error: NSError?
         return client.isMCLCurrentlyEnabled(&error) != 0 && error == nil
+    }
+
+    //
+    // True while macOS is charging to 100% for battery gauge calibration. The
+    // limit is suspended until it finishes and nothing we write changes that.
+    //
+    static var isCalibrating: Bool {
+        guard let client = self.client,
+              (client as AnyObject).responds(
+                  to: NSSelectorFromString(
+                      "smartChargingUIState:chargeLimit:chargingOverrideAllowed:withError:"
+                  )
+              )
+        else {
+            return false
+        }
+
+        var state: UInt64 = 0
+        var limit: UInt64 = 0
+        var overrideAllowed = ObjCBool(false)
+        var error: NSError?
+        guard client.smartChargingUIState(
+            &state,
+            chargeLimit: &limit,
+            chargingOverrideAllowed: &overrideAllowed,
+            withError: &error
+        ), error == nil else {
+            return false
+        }
+
+        return state == self.gaugingUIState
     }
 
     //

@@ -98,6 +98,19 @@ public enum MCLPreflight {
                 let responds = cls.instancesRespond(to: NSSelectorFromString(selector))
                 check("selector \(selector)", responds, responds ? "present" : "missing")
             }
+
+            //
+            // Only used to tell the user macOS is calibrating; the limit
+            // works without it.
+            //
+            let uiState = "smartChargingUIState:chargeLimit:chargingOverrideAllowed:withError:"
+            let responds = cls.instancesRespond(to: NSSelectorFromString(uiState))
+            check(
+                "selector \(uiState)",
+                responds,
+                responds ? "present" : "missing - calibration not detectable",
+                fatal: false
+            )
         }
 
         //

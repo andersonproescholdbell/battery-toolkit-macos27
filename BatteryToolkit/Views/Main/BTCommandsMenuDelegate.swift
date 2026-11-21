@@ -22,6 +22,7 @@ internal final class BTCommandsMenuDelegate: NSObject, NSMenuDelegate {
     @IBOutlet private var infoRequestedChargingToLimitItem: NSMenuItem!
     @IBOutlet private var infoRequestedChargingToFullItem: NSMenuItem!
     @IBOutlet private var infoNotChargingUnknownModeItem: NSMenuItem!
+    @IBOutlet private var infoCalibratingItem: NSMenuItem!
 
     @IBOutlet private var disablePowerAdapterItem: NSMenuItem!
     @IBOutlet private var enablePowerAdapterItem: NSMenuItem!
@@ -70,6 +71,7 @@ internal final class BTCommandsMenuDelegate: NSObject, NSMenuDelegate {
                 self.infoRequestedChargingToLimitItem.isHidden = true
                 self.infoRequestedChargingToFullItem.isHidden = true
                 self.infoNotChargingUnknownModeItem.isHidden = true
+                self.infoCalibratingItem.isHidden = true
 
                 self.hidePowerItems()
 
@@ -196,6 +198,23 @@ internal final class BTCommandsMenuDelegate: NSObject, NSMenuDelegate {
                 }
             }
             
+            //
+            // macOS suspends the limit while it charges to 100% to recalibrate
+            // the battery gauge. Say so instead of claiming charging is held.
+            //
+            let calibrating = connected &&
+                ((state[BTStateInfo.Keys.calibrating] as? NSNumber)?.boolValue ?? false)
+            self.infoCalibratingItem.isHidden = !calibrating
+            if calibrating {
+                self.infoChargingToLimitItem.isHidden = true
+                self.infoChargingToFullItem.isHidden = true
+                self.infoChargingUnknownModeItem.isHidden = true
+                self.infoNotChargingItem.isHidden = true
+                self.infoRequestedChargingToLimitItem.isHidden = true
+                self.infoRequestedChargingToFullItem.isHidden = true
+                self.infoNotChargingUnknownModeItem.isHidden = true
+            }
+
             let chargeBelowMax = progress <= BTStateInfo.ChargingProgress
                 .belowMax.rawValue
             let chargeBelowFull = progress <= BTStateInfo.ChargingProgress
@@ -271,6 +290,7 @@ internal final class BTCommandsMenuDelegate: NSObject, NSMenuDelegate {
             self.infoRequestedChargingToLimitItem.isHidden = true
             self.infoRequestedChargingToFullItem.isHidden = true
             self.infoNotChargingUnknownModeItem.isHidden = true
+            self.infoCalibratingItem.isHidden = true
 
             self.hidePowerItems()
 

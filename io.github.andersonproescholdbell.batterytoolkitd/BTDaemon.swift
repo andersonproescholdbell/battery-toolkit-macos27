@@ -35,6 +35,12 @@ internal enum BTDaemon {
         let progress = BTPowerEvents.getChargingProgress()
         let mode = BTPowerEvents.chargingMode
         let maxCharge = BTSettings.maxCharge
+        let calibrating: Bool
+        if case .mcl = SMCComm.Power.backend {
+            calibrating = SystemChargeLimit.isCalibrating
+        } else {
+            calibrating = false
+        }
 
         return [
             BTStateInfo.Keys.enabled: NSNumber(value: 1),
@@ -47,7 +53,8 @@ internal enum BTDaemon {
                 .chargingDisabled: NSNumber(value: chargingDisabled),
             BTStateInfo.Keys.progress: NSNumber(value: progress.rawValue),
             BTStateInfo.Keys.chargingMode: NSNumber(value: mode.rawValue),
-            BTStateInfo.Keys.maxCharge: NSNumber(value: maxCharge)
+            BTStateInfo.Keys.maxCharge: NSNumber(value: maxCharge),
+            BTStateInfo.Keys.calibrating: NSNumber(value: calibrating)
         ]
     }
     
