@@ -145,25 +145,29 @@ internal enum BTPowerState {
     }
 
     static func disableCharging(percent: UInt8) -> Bool {
-        guard !self.chargingDisabled else {
-            return true
-        }
-
         let success: Bool
         switch SMCComm.Power.backend {
         case .legacy:
+            guard !self.chargingDisabled else {
+                return true
+            }
+
             success = SMCComm.Power.disableCharging()
 
         case .mcl:
             //
-            // Arm the ceiling at the configured maximum. The guard keeps it
-            // from landing below the current charge, which would make the Mac
-            // discharge from wall power to reach it.
+            // Keep the ceiling at max(maximum, current charge). Unlike the
+            // legacy inhibit it is a value, not a switch, so "already
+            // disabled" is not enough: a ceiling left higher lets the battery
+            // charge past the maximum, and one left lower than the charge makes
+            // the Mac discharge from wall power to reach it.
             //
-            success = SMCComm.Power.setChargingLimit(
-                limit: BTSettings.maxCharge,
-                currentPercent: percent
-            )
+            let target = Int(max(BTSettings.maxCharge, percent))
+            success = SystemChargeLimit.agentLimit() == target ||
+                SMCComm.Power.setChargingLimit(
+                    limit: BTSettings.maxCharge,
+                    currentPercent: percent
+                )
         }
 
         guard success else {

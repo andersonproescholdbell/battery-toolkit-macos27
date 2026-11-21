@@ -64,7 +64,7 @@ internal enum BTPowerEvents {
             return
         }
 
-        os_log("System charge limit armed at \(BTSettings.maxCharge)")
+        os_log("System charge limit armed at \(max(BTSettings.maxCharge, percent)) (maximum \(BTSettings.maxCharge))")
     }
 
     private static func restoreState() {
@@ -291,6 +291,15 @@ internal enum BTPowerEvents {
                 //
                 _ = BTPowerEvents.disableCharging(percent: percent)
             }
+        } else if case .mcl = SMCComm.Power.backend,
+                  self.chargingMode == .standard
+        {
+            //
+            // Pull down a ceiling that was raised while the charge was higher
+            // (it is not tracked on battery), so plugging in below the maximum
+            // cannot charge past it.
+            //
+            _ = BTPowerState.disableCharging(percent: percent)
         } else if percent < BTSettings.minCharge {
             //
             // Only the legacy backend needs charging re-enabled: it inhibits
